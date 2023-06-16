@@ -5,88 +5,117 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// Lista de tareas
 let tasks = [];
 
+// Función para añadir una tarea a la lista
 function addTask() {
-  rl.question('Introduce el indicador de la tarea: ', (indicator) => {
-    rl.question('Introduce la descripción de la tarea: ', (description) => {
-      tasks.push({
-        indicator,
-        description,
-        completed: false
+  return new Promise((resolve, reject) => {
+    rl.question('Indicador de la tarea: ', (indicator) => {
+      rl.question('Descripción de la tarea: ', (description) => {
+        tasks.push({ indicator, description, completed: false });
+        resolve('Tarea añadida exitosamente.');
       });
-      console.log('Tarea añadida con éxito.');
-      showMenu();
     });
   });
 }
 
-function deleteTask() {
-  rl.question('Introduce el indicador de la tarea a eliminar: ', (indicator) => {
-    const index = tasks.findIndex(task => task.indicator === indicator);
-    if (index !== -1) {
-      tasks.splice(index, 1);
-      console.log('Tarea eliminada con éxito.');
-    } else {
-      console.log('No se encontró ninguna tarea con ese indicador.');
-    }
-    showMenu();
+// Función para eliminar una tarea de la lista
+function removeTask() {
+  return new Promise((resolve, reject) => {
+    rl.question('Indicador de la tarea a eliminar: ', (indicator) => {
+      const index = tasks.findIndex(task => task.indicator === indicator);
+      if (index !== -1) {
+        tasks.splice(index, 1);
+        resolve('Tarea eliminada exitosamente.');
+      } else {
+        reject('No se encontró la tarea con el indicador proporcionado.');
+      }
+    });
   });
 }
 
+// Función para marcar una tarea como completada
 function completeTask() {
-  rl.question('Introduce el indicador de la tarea a completar: ', (indicator) => {
-    const task = tasks.find(task => task.indicator === indicator);
-    if (task) {
-      task.completed = true;
-      console.log('Tarea marcada como completada.');
-    } else {
-      console.log('No se encontró ninguna tarea con ese indicador.');
-    }
-    showMenu();
+  return new Promise((resolve, reject) => {
+    rl.question('Indicador de la tarea a completar: ', (indicator) => {
+      const task = tasks.find(task => task.indicator === indicator);
+      if (task) {
+        task.completed = true;
+        resolve('Tarea completada exitosamente.');
+      } else {
+        reject('No se encontró la tarea con el indicador proporcionado.');
+      }
+    });
   });
 }
 
+// Función para mostrar el estado actual de la lista de tareas
 function showTasks() {
   console.log('Lista de tareas:');
   tasks.forEach(task => {
-    const status = task.completed ? 'Completada' : 'No completada';
-    console.log(`- ${task.indicator}: ${task.description} (${status})`);
+    const status = task.completed ? 'Completada' : 'Pendiente';
+    console.log(`${task.indicator}: ${task.description} (${status})`);
   });
-  showMenu();
 }
 
+// Función para mostrar el menú de opciones
 function showMenu() {
-  console.log('\n¿Qué acción deseas realizar?');
+  console.log('\n--- MENÚ ---');
   console.log('1. Añadir tarea');
   console.log('2. Eliminar tarea');
   console.log('3. Completar tarea');
   console.log('4. Mostrar tareas');
   console.log('5. Salir');
-  rl.question('Introduce el número de la opción: ', (option) => {
+
+  rl.question('Seleccione una opción: ', async (option) => {
     switch (option) {
       case '1':
-        addTask();
+        try {
+          const message = await addTask();
+          console.log(message);
+        } catch (error) {
+          console.log('Error al añadir la tarea:', error);
+        }
+        showMenu();
         break;
       case '2':
-        deleteTask();
+        removeTask()
+          .then(message => {
+            console.log(message);
+            showMenu();
+          })
+          .catch(error => {
+            console.log('Error al eliminar la tarea:', error);
+            showMenu();
+          });
         break;
       case '3':
-        completeTask();
+        try {
+          const message = await completeTask();
+          console.log(message);
+        } catch (error) {
+          console.log('Error al completar la tarea:', error);
+        }
+        showMenu();
         break;
       case '4':
         showTasks();
+        showMenu();
         break;
       case '5':
         rl.close();
         break;
       default:
-        console.log('Opción inválida. Inténtalo de nuevo.');
+        console.log('Opción no válida. Intente nuevamente.');
         showMenu();
         break;
     }
   });
 }
 
-console.log('Bienvenido al gestor de tareas.');
+// Inicio del programa
+console.log('Bienvenido a la lista de tareas.');
+
+// Mostrar el menú inicial
 showMenu();
